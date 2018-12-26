@@ -2,7 +2,7 @@
 
 OVERVIEW
 --------------------------------------------------
-The purpose of this project was to implement a retro game in VHDL (VHSIC Hardware Description Language) along with a FPGA for the [Digital Systems] course. It was made at the Computer Science undergraduate program from University of São Paulo (ICMC - USP).
+The purpose of this project was to implement a retro game in VHDL (VHSIC Hardware Description Language) following FSM (Finite State Machine) concepts along with a FPGA for the [Digital Systems] course. It was made at the Computer Science undergraduate program from University of São Paulo (ICMC - USP).
 
 THE GAME
 --------------------------------------------------
