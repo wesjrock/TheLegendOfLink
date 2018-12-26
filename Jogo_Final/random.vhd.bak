@@ -1,0 +1,54 @@
+-- *************************************************
+-- JOGO Atropele a Bolinha 
+-- INSTRU��ES:
+-- As teclas W e S movimentam o Sapo
+-- para cima e para baixo.
+-- As teclas A e D movimentam o Sapo 
+-- para esquerda e direita.
+-- *************************************************
+library IEEE;
+use  IEEE.STD_LOGIC_1164.all;
+use  IEEE.STD_LOGIC_ARITH.all;
+use  IEEE.STD_LOGIC_UNSIGNED.all;
+use  ieee.numeric_std.all;
+
+ENTITY notepad IS
+
+	PORT(
+		clk	: IN	STD_LOGIC;
+		key	: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- teclado
+		random : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+		);
+
+END  notepad ;
+
+ARCHITECTURE a OF notepad IS
+
+BEGIN
+
+--random
+PROCESS (clk, reset)
+	
+	VARIABLE cont : INTEGER;
+	Variable cont2 :INTEGER;
+	Variable cont3 :INTEGER;
+	
+BEGIN
+	IF RESET = '1' THEN
+		cont := 0;
+		RANDOM <= x"00";
+	ELSIF(key = x"ff") Then
+			cont2 := cont2 + 1;
+	END IF;
+	IF cont = 10000 THEN
+		cont := 0;
+		cont2 := 0;
+		cont3 := cont2 MOD 30;
+		RANDOM <= std_logic_vector(to_unsigned(cont3, 8));
+	ELSE
+		cont3 := cont3 + 3;
+		RANDOM <= std_logic_vector(to_unsigned(cont3, 8));
+	END IF;
+END PROCESS;
+
+END a;

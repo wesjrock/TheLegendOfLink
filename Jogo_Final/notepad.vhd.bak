@@ -1,0 +1,275 @@
+-- *************************************************
+-- JOGO Atropele a Bolinha 
+-- INSTRU��ES:
+-- As teclas W e S movimentam o Sapo
+-- para cima e para baixo.
+-- As teclas A e D movimentam o Sapo 
+-- para esquerda e direita.
+-- *************************************************
+library IEEE;
+use  IEEE.STD_LOGIC_1164.all;
+use  IEEE.STD_LOGIC_ARITH.all;
+use  IEEE.STD_LOGIC_UNSIGNED.all;
+
+ENTITY notepad IS
+
+	PORT(
+		clkvideo, clk, reset  : IN	STD_LOGIC;
+		video		: OUT	STD_LOGIC_VECTOR(15 DOWNTO 0);  -- 2 bits para a cor 6 bits para o caracter 8 bits de endereco (direita para esquerda)
+		key			: IN 	STD_LOGIC_VECTOR(7 DOWNTO 0);	-- teclado
+		video_set	: IN 	STD_LOGIC;
+		video_ready	: out 	STD_LOGIC
+		);
+
+END  notepad ;
+
+ARCHITECTURE a OF notepad IS
+	
+	SIGNAL videoflag   : STD_LOGIC;
+	-- Escreve na tela
+	SIGNAL VIDEOE      : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	-- Contador de tempo
+
+	-- Sapo
+	SIGNAL SAPOPOS   : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL SAPOPOSA  : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL SAPOCHAR  : STD_LOGIC_VECTOR(5 DOWNTO 0);
+	SIGNAL SAPOCOR   : STD_LOGIC_VECTOR(1 DOWNTO 0);
+
+	-- Bolinha
+	SIGNAL BOLAPOS     : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL BOLAPOSA    : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL BOLACHAR    : STD_LOGIC_VECTOR(5 DOWNTO 0);
+	SIGNAL BOLACOR     : STD_LOGIC_VECTOR(1 DOWNTO 0);
+	SIGNAL INCBOLA     : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL SINAL	    : STD_LOGIC;
+
+	--Delay do Sapo
+	SIGNAL DELAY1      : STD_LOGIC_VECTOR(31 DOWNTO 0);
+	--Delay da Bolinha
+	SIGNAL DELAY2      : STD_LOGIC_VECTOR(31 DOWNTO 0);
+
+	SIGNAL SAPOESTADO : STD_LOGIC_VECTOR(7 DOWNTO 0);
+	--Estados da Bolinha
+	SIGNAL B_ESTADO    : STD_LOGIC_VECTOR(7 DOWNTO 0);
+BEGIN
+
+-- Movimenta BARRAS
+PROCESS (clk, reset)
+	
+	BEGIN
+		
+	IF RESET = '1' THEN
+		SAPOCHAR <= "000001";
+		SAPOCOR <= "10"; -- 10 verde
+		SAPOPOS <= x"64";
+		DELAY1 <= x"00000000";
+		SAPOESTADO <= x"00";
+		
+	ELSIF (clk'event) and (clk = '1') THEN
+
+		CASE SAPOESTADO IS
+			WHEN x"00" => -- Estado movimenta Sapo segundo Teclado
+			
+				CASE key IS
+					WHEN x"53" => -- (S) BAIXO
+						IF (SAPOPOS < 220) THEN   -- nao esta' na ultima linha
+							SAPOPOS <= SAPOPOS + x"14";  -- SAPOPOS + 20
+						END IF;
+					WHEN x"57" => -- (W) CIMA
+						IF (SAPOPOS > 19) THEN   -- nao esta' na primeira linha
+							SAPOPOS <= SAPOPOS - x"14";  -- SAPOPOS - 20
+						END IF;
+					WHEN x"41" => -- (A) ESQUERDA
+						IF (NOT((conv_integer(SAPOPOS) MOD 20) = 0)) THEN   -- nao esta' na extrema esquerda
+							SAPOPOS <= SAPOPOS - x"01";  -- SAPOPOS - 1
+						END IF;
+					WHEN x"44" => -- (D) DIREITA
+						IF (NOT((conv_integer(SAPOPOS) MOD 20) = 19)) THEN   -- nao esta' na extrema direita
+							SAPOPOS <= SAPOPOS + x"01";  -- SAPOPOS + 1
+						END IF;
+					WHEN OTHERS =>
+				END CASE;
+				SAPOESTADO <= x"01";
+
+			
+			WHEN x"01" => -- Delay para movimentar Sapo
+			 
+				IF DELAY1 >= x"0000FFFF" THEN
+					DELAY1 <= x"00000000";
+					SAPOESTADO <= x"00";
+				ELSE
+					DELAY1 <= DELAY1 + x"01";
+				END IF;
+				
+			WHEN OTHERS =>
+		END CASE;
+	END IF;
+
+END PROCESS;
+
+-- Bolinha
+PROCESS (clk, reset)
+
+BEGIN
+		
+	IF RESET = '1' THEN
+		BOLACHAR <= "000010";
+		BOLACOR <= "01"; -- 01 Vermelho
+		BOLAPOS <= x"6E";
+		INCBOLA <= x"15";
+		SINAL <= '0';	
+		DELAY2 <= x"00000000";
+		B_ESTADO <= x"00";
+		
+	ELSIF (clk'event) and (clk = '1') THEN
+
+				CASE B_ESTADO iS
+					WHEN x"00" =>
+						-- INCREMENTA A POS DA BOLA
+							IF (SINAL = '0') THEN BOLAPOS <= BOLAPOS + INCBOLA;
+							ELSE BOLAPOS <= BOLAPOS - INCBOLA; END IF;
+							
+							B_ESTADO <= x"01";
+						
+					WHEN x"01" => -- Bola esta' subindo e chegou na linha de cima : SINAL = 1
+						IF (BOLAPOS < 20) THEN
+							IF (INCBOLA = 21) THEN INCBOLA <= x"13"; SINAL <= '0'; END IF;
+							IF (INCBOLA = 20) THEN INCBOLA <= x"14"; SINAL <= '0'; END IF;
+							IF (INCBOLA = 19) THEN INCBOLA <= x"15"; SINAL <= '0'; END IF;
+						end if;							
+
+						B_ESTADO <= x"02";
+
+
+					WHEN x"02" => -- Bola esta' descendo e chegou na linha de baixo : SINAL = 0
+						IF (BOLAPOS > 219) THEN
+							IF (INCBOLA = 21) THEN INCBOLA <= x"13"; SINAL <= '1'; END IF;
+							IF (INCBOLA = 20) THEN INCBOLA <= x"14"; SINAL <= '1'; END IF;
+							IF (INCBOLA = 19) THEN INCBOLA <= x"15"; SINAL <= '1'; END IF;
+						end if;							
+
+						B_ESTADO <= x"03";
+	
+					WHEN x"03" => -- Bola esta' indo para direita e chegou na extrema direita: SINAL = ? 
+						IF ((conv_integer(BOLAPOS) MOD 20) = 19) THEN
+							IF (INCBOLA = 19) THEN INCBOLA <= x"15"; SINAL <= '1'; END IF;
+							IF (INCBOLA = 1) THEN INCBOLA <= x"01"; SINAL <= '1'; END IF;
+							IF (INCBOLA = 21) THEN INCBOLA <= x"13"; SINAL <= '0'; END IF;
+						end if;							
+
+						B_ESTADO <= x"04";
+	
+					WHEN x"04" => -- Bola esta' indo para esquerda e chegou na extrema esquerda: SINAL = ? 
+						IF ((conv_integer(BOLAPOS) MOD 20) = 0) THEN
+							IF (INCBOLA = 19) THEN INCBOLA <= x"15"; SINAL <= '0'; END IF;
+							IF (INCBOLA = 1) THEN INCBOLA <= x"01"; SINAL <= '0'; END IF;
+							IF (INCBOLA = 21) THEN INCBOLA <= x"13"; SINAL <= '1'; END IF;
+						end if;							
+
+						B_ESTADO <= x"FF";
+
+					WHEN x"FF" =>  -- Delay da Bola
+			
+						IF DELAY2 >= x"0000FFFF" THEN 
+							DELAY2 <= x"00000000";
+							B_ESTADO <= x"00";
+						ELSE
+							DELAY2 <= DELAY2 + x"01";
+						END IF;
+			
+	
+	
+					WHEN OTHERS =>
+						B_ESTADO <= x"00";
+					
+				END CASE;
+				
+
+	END IF;
+	
+END PROCESS;
+
+-- Escreve na Tela
+PROCESS (clkvideo, reset)
+
+BEGIN
+	IF RESET = '1' THEN
+		VIDEOE <= x"00";
+		videoflag <= '0';
+		SAPOPOSA <= x"00";
+		BolAPOSA <= x"00";
+	ELSIF (clkvideo'event) and (clkvideo = '1') THEN
+		CASE VIDEOE IS
+			WHEN x"00" => -- Apaga Bolinha
+				if(BOLAPOSA = BOLAPOS) then
+					VIDEOE <= x"04";
+				else
+					if(BOLAPOSA = SAPOPOSA) then -- Se tiver encima do Sapo, apaga com o Sapo !! Pra nao apagar o Sapo !!
+						video(15 downto 14) <= SAPOCOR; -- Cor
+						video(13 downto 8) <= SAPOCHAR; -- Caractere
+					
+					else
+						video(15 downto 14) <= "00"; -- Cor
+						video(13 downto 8) <= "000000"; -- Caractere
+					end if;
+					video(7 downto 0) <= BOLAPOSA; -- Posicao
+					videoflag <= '1';
+					VIDEOE <= x"01";
+					
+				end if;
+			WHEN x"01" =>
+				videoflag <= '0';
+				VIDEOE <= x"02";
+			WHEN x"02" => -- Desenha Bolinha
+				video(15 downto 14) <= BOLACOR; -- Cor
+				video(13 downto 8) <= BOLACHAR; -- Caractere
+				video(7 downto 0) <= BOLAPOS; -- Posicao
+				BOLAPOSA <= BOLAPOS;   -- Pos Anterior = Pos Atual
+				videoflag <= '1';
+				VIDEOE <= x"03";
+			WHEN x"03" =>
+				videoflag <= '0';
+				VIDEOE <= x"04";
+			
+			
+			
+			WHEN x"04" => -- Apaga Sapo
+				if(SAPOPOSA = SAPOPOS) then
+					VIDEOE <= x"00";
+				else
+					video(15 downto 14) <= "00"; -- Cor
+					video(13 downto 8) <= "000000"; -- Caractere
+					video(7 downto 0) <= SAPOPOSA; -- Posicao
+					videoflag <= '1';
+					VIDEOE <= x"05";
+				end if;
+			WHEN x"05" =>
+				videoflag <= '0';
+				VIDEOE <= x"06";
+			WHEN x"06" => -- Desenha Sapo
+				video(15 downto 14) <= SAPOCOR; -- Cor
+				video(13 downto 8) <= SAPOCHAR; -- Caractere
+				video(7 downto 0) <= SAPOPOS; -- Posicao
+				SAPOPOSA <= SAPOPOS;
+				videoflag <= '1';
+				VIDEOE <= x"07";
+			WHEN x"07" =>
+				videoflag <= '0';
+				VIDEOE <= x"00";
+			
+			WHEN OTHERS =>
+				videoflag <= '0';
+				VIDEOE <= x"00";	
+		END CASE;
+	END IF;
+END PROCESS;
+	
+PROCESS (videoflag, video_set)
+BEGIN
+  IF video_set = '1' THEN video_ready <= '0';
+  ELSIF videoflag'EVENT and videoflag = '1' THEN video_ready <= '1';
+  END IF;
+END PROCESS;
+
+END a;
