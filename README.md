@@ -21,7 +21,7 @@ The game was made using Quartus software along with an Altera Cyclone II DE2-70 
 	3. Open the file AP9.qpf and compile the project.
 ```
 
-COMMAND LIST
+HOW TO PLAY
 --------------------------------------------------
 ```bash
 	W: up
