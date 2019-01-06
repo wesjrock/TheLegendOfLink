@@ -31,7 +31,7 @@ HOW TO PLAY
 
 CREDITS
 --------------------------------------------------
-- Andrel Miguel Coelho Leite
+- Andre Miguel Coelho Leite
 - Giovane Cunha Mocelin
 - Wesley Tiozzo
 
