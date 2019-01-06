@@ -29,6 +29,12 @@ HOW TO PLAY
 	SPACE BAR: shoot arrows
 ```
 
+CREDITS
+--------------------------------------------------
+- Andrel Miguel Coelho Leite
+- Giovane Cunha Mocelin
+- Wesley Tiozzo
+
 MORE INFO
 --------------------------------------------------
 * Please check the file `project report.pdf` to view the code and know more about this project.
